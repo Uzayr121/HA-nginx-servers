@@ -95,4 +95,5 @@ done
 - To create our cron job we do `crontab -e` and then we add `* * * * * /path/to/script`
 - the `* * * * *` means it will run every minute of every hour of every day of every week of every weekday
 - our status page will be continuously monitoring our backend and reverse proxy servers
+
 ![status](images/status.png)
