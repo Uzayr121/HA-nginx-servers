@@ -45,4 +45,54 @@ this will distribute traffic across the 2 backend servers
     proxy_pass http://'name of server'(name we use for upstream block);
 }
 ```
-- we do this in both reverse proxy servers
+- we do this in both reverse proxy servers, and we add them both within the server block
+
+- then we test whether it works by creating an A record and pointing it to the public IP of the main reverse proxy. by refreshing we should get access to both pages
+
+# Status page
+
+- For this page we need to create a script which will write to a `.html` file 
+- We will edit the /etc/nginx/nginx.conf and add an index under root in the server block. The index will be the name of the file we will output to
+- For the script we use Curl to confirm whether the servers are active or are down
+```#!/bin/bash
+nginx1="172.31.88.200"
+nginx2="172.31.95.109"
+proxy1="172.31.87.160 "
+proxy2="172.31.85.228"
+while true; do
+if [ $(curl -Is $nginx1 | head -n 1 | awk '{print $2}') -eq 200 ]; then
+echo "server 1 is up and running"
+else
+echo "server 1 is down"
+fi
+if [ $(curl -Is $nginx2 | head -n 1 | awk '{print $2}') -eq 200 ]; then
+echo "server 2 is up and running"
+else
+echo "server 2 is down"
+fi
+if [ $(curl -Is $proxy1 | head -n 1 | awk '{print $2}') -eq 200 ]; then
+echo "main reverse proxy is up and running"
+else
+echo "main reverse proxy is down"
+fi
+if [ $(curl -Is $proxy2 | head -n 1 | awk '{print $2}') -eq 200 ]; then
+echo "back-up reverse proxy is up and running"
+else
+echo "back-up reverse proxy is down"
+fi
+sleep 5
+done
+```
+- we then change it into .html format and output it to a .html file
+- to test it we first have to make it executable `chmod +x /path/to/script`
+
+
+# Continuous monitoring of server health
+
+- For our script to run continuously we have to create a cronjob
+- first we install cron `sudo yum install cronie`
+- then we enable and start it ` sudo systemctl enable crond``sudo systemctl start crond`
+- To create our cron job we do `crontab -e` and then we add `* * * * * /path/to/script`
+- the `* * * * *` means it will run every minute of every hour of every day of every week of every weekday
+- our status page will be continuously monitoring our backend and reverse proxy servers
+![status](images/status.png)
