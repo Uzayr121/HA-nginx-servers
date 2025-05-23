@@ -3,9 +3,15 @@
 
 # Contents
 
-- #Project Objective[#Project-Objective]
-- #servers[#Servers]
-- #Reverse proxy and load balancer configuration[#Reverse-proxy-and-load-balancer-configuration]
+- [Project Objective](#Project-Objective)
+- [servers](#Servers)
+- [Reverse proxy and load balancer configuration](#Reverse-proxy-and-load-balancer-configuration)
+- [Status page](#status-page)
+- [Continuous monitoring](#continuous-monitoring-of-server-health)
+- [SSL/TLS](#ssl)
+- [High-availability](#bonushigh-availability)
+- [Error](#reminders-and-errors)
+
 
 # Project Objective
 
