@@ -1,4 +1,11 @@
-High availability web server with NGINX and SSL
+## High availability web server with NGINX and SSL
+
+
+# Contents
+
+- #Project Objective[#Project-Objective]
+- #servers[#Servers]
+- #Reverse proxy and load balancer configuration[#Reverse-proxy-and-load-balancer-configuration]
 
 # Project Objective
 
@@ -97,3 +104,56 @@ done
 - our status page will be continuously monitoring our backend and reverse proxy servers
 
 ![status](images/status.png)
+
+
+# SSL
+
+- as of now our web servers are not encrypted, and to encrypt it we need a tls/ssl certificate
+- for this we used letsencrypt which is a free certificate provider
+- to begin with SSL/TLS set up we have to download certbot
+`sudo yum install certbot python3-certbot-nginx`
+- we have to make sure that we **stop** Nginx as we need certbot to bind to port 80 and with Nginx binded to port 80 it won't work
+`sudo systemctl stop nginx`
+- then we do `sudo certbot certonly --standalone -d <your-domain>`
+- once you provide your email and confirm a certificate will be generated, and we will have the location of the certificate and private key
+- edit the nginx.conf file and add in the location of the `cert.pem` and `privkey.pem`
+- we have to add the same `location / {}` block in the https server block, pointing it to our load balancer
+- we can then test if it works by using https://domain
+- now we can force redirection by adding a return line in the listen / block
+```
+listen / {
+    proxy_pass http://server-name;
+    return 301 https://your-domain;
+}
+```
+- now when we access our website it will always be redirected to HTTPS
+
+![redirection](images/https.gif)
+
+
+# Bonus(high-availability)
+
+- For the bonus, we created an application load balancer on AWS
+- to begin with we created our target groups, which listened on port 80 on the /health endpoint. select the 2 Reverse proxy servers as you're targets.
+- then in the 2 reverse proxy server add 
+``` listen /health {
+    return 200 'OK';
+    add_header Content-Type text/plain;
+}
+```
+- give it a while and your instances should come up as healthy
+- then we create an application load balancer, and for our listener we listen to traffic on the target group we created
+- our listener should listen on port 80 as we don't have a cert configured on AWS 
+- our security group on the ALB should accept inbound traffic from port 80 and 443
+- once this is configured and the targets are healthy we can test our alb domain name and if successful we then can create a CNAME on our domain provider and point our domain to the ALB
+
+
+
+# Reminders and errors
+
+- make sure to always restart nginx after making changes `sudo systemctl restart nginx`
+- make sure to always check the nginx config after makng changes `sudo nginx -t -c /etc/nginx/nginx.conf`
+- don't forget to add **;** after every line in the nginx.conf file
+- don't add the return(https redirection) in the health check block or the instances won't be considered **healthy**
+- regularly use curl, ping, dig and other netowrking commands to check accessability of website
+- you may have to clear cookies if not able to connect to website
